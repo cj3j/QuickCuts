@@ -1,0 +1,125 @@
+﻿namespace JRun
+
+open System
+open System.IO
+open System.Collections.Generic
+open Result
+open Enumerator
+
+module TextTree =
+
+    type Node<'T> = {
+        value: 'T;
+        children: Node<'T> list;
+    }
+
+    type Root<'T> = {
+        children: Node<'T> list;
+    }
+
+    module Parse =
+
+        type Context = {
+            file: string;
+            line: int;
+        }
+
+        type NodeLine = {
+            context: Context
+            value: string;
+            depth: int;
+        }
+
+        let failWithContext context message =
+            let newMessage = sprintf "File %s, line %d. %s" context.file context.line message
+            Failure newMessage
+
+        let textLinesToNodeLines context (sequence:seq<string>) =
+            let removeLineComment str =
+                let idx = str |> String.indexOf "//"
+                match idx with
+                | -1 -> str
+                | _ -> str |> String.subStringStart idx |> String.trimEnd
+
+            let isWhiteSpace c =
+                match c with
+                | ' ' | '\t' -> true
+                | _ -> false
+
+            let parseNodeLine (prevContext, prevLine) textLine =
+                let newContext = { prevContext with line = prevContext.line + 1 }
+                let payload = textLine |> removeLineComment |> String.trim
+                match payload with
+                    | "" -> (newContext, None)
+                    | _ ->
+                        let depth = textLine |> String.countChars isWhiteSpace
+                        let nodeLine = { context = newContext; value = payload; depth = depth }
+                        ( newContext, Some nodeLine)
+
+            sequence
+                |> Seq.scan parseNodeLine (context, None)
+                |> Seq.map snd
+                |> Seq.choose id
+               
+        let nodeLinesToNodeTree (converter:string -> 'T Result) (lineSeq:seq<NodeLine>) =
+            let rec buildNode line lines = 
+                let convertedValue = converter line.value
+                match convertedValue with
+                | Failure f -> failWithContext line.context f
+                | Success v ->
+                    buildChildren line.depth lines
+                    >>= fun (children, remaining) ->
+                        let node = { value = v; children = children }
+                        Success(node, remaining)                        
+
+            and buildChildren parentDepth lines =
+                match lines.current with
+                | None -> Success ([], lines)
+                | Some line ->
+                    if line.depth > parentDepth then
+                        buildChildrenAtDepth line.depth [] lines
+                    else
+                        Success ([], lines)
+
+            and buildChildrenAtDepth childDepth children lines =
+                match lines.current with
+                | None -> Success (children, lines)
+                | Some line ->
+                    if line.depth = childDepth then
+                        let remaining = Enumerator.next lines
+                        buildChild childDepth children line remaining
+                    else if line.depth < childDepth then
+                        Success (children, lines)
+                    else
+                        failWithContext line.context "Unexpected amount of leading whitespace."
+
+            and buildChild childDepth children line lines =
+                buildNode line lines
+                >>= fun (node, remaining) ->
+                    let newChildren = node :: children
+                    buildChildrenAtDepth childDepth newChildren remaining
+
+            let lines = Enumerator.make(lineSeq.GetEnumerator())
+            let result = buildChildrenAtDepth 0 [] lines
+            match result with
+            | Failure f -> Failure f
+            | Success (children, _) ->
+                let root = { children = children }
+                Success root 
+
+        let parseTreeFromSequence (converter:string -> 'T Result) context sequence =
+            textLinesToNodeLines context sequence
+            |> nodeLinesToNodeTree converter
+
+        let parseTreeFromFile (filePath:string) (converter:string -> 'T Result) =
+            let readLines = seq {
+                use reader = new StreamReader(filePath)
+                while not reader.EndOfStream do
+                    yield reader.ReadLine()
+            }
+
+            try
+                let context = {file = filePath; line = 0;}
+                parseTreeFromSequence converter context readLines
+            with
+                | ex -> Failure ex.Message

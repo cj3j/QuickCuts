@@ -1,0 +1,54 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="QuickCutsUI.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="ConsoleWindowWidth" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">200</Value>
+    </Setting>
+    <Setting Name="ConsoleWindowHeight" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">60</Value>
+    </Setting>
+    <Setting Name="ConsoleWindowTop" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="ConsoleWindowLeft" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="History" Type="System.Collections.Specialized.StringCollection" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="BackColorString" Type="System.String" Scope="User">
+      <Value Profile="(Default)">#99004488</Value>
+    </Setting>
+    <Setting Name="BorderColorString" Type="System.String" Scope="User">
+      <Value Profile="(Default)">#FF000000</Value>
+    </Setting>
+    <Setting Name="TextColorString" Type="System.String" Scope="User">
+      <Value Profile="(Default)">#FFFFAA00</Value>
+    </Setting>
+    <Setting Name="ErrorColorString" Type="System.String" Scope="User">
+      <Value Profile="(Default)">#FFFF0000</Value>
+    </Setting>
+    <Setting Name="TextBackColorString" Type="System.String" Scope="User">
+      <Value Profile="(Default)">#99000000</Value>
+    </Setting>
+    <Setting Name="HotKeyString" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Alt + Space</Value>
+    </Setting>
+    <Setting Name="bStartWithWindows" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="CommandListProgram" Type="System.String" Scope="User">
+      <Value Profile="(Default)">QuickCuts.exe -file Commands.txt -profile Default -list</Value>
+    </Setting>
+    <Setting Name="CommandExecuteProgram" Type="System.String" Scope="User">
+      <Value Profile="(Default)">QuickCuts.exe -file Commands.txt -profile Default</Value>
+    </Setting>
+    <Setting Name="HelpURL" Type="System.String" Scope="User">
+      <Value Profile="(Default)">https://github.com/cj3j/QuickCuts</Value>
+    </Setting>
+    <Setting Name="Version" Type="System.String" Scope="User">
+      <Value Profile="(Default)">2.0</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

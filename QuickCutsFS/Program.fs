@@ -21,6 +21,10 @@ open ProgramArgs
 
 module Program =
 
+    module Exceptions = 
+        type MissingEndQuote(cmd:string) =
+            inherit Exception(sprintf "Command '%s' is missing an end quote." cmd)
+
     [<EntryPoint>]
     let main argv = 
         let printExec (command:string) (exec:string) =
@@ -51,7 +55,22 @@ module Program =
             combineExceptionMessages ex.InnerException ex.Message
             //ex.Message
 
-        let parseProgramAndArgs exec:string : string*string =
+        let parseQuotedProgramAndArgs exec:string : string*string =
+            let quoteEndIdx = String.indexOfAt "\"" 1 exec
+            match quoteEndIdx with
+            | Some endIdx ->
+                let prog =
+                    exec
+                    |> String.subStringMid 1 (endIdx - 1)
+                    |> String.trim
+                let args =
+                    exec
+                    |> String.subStringEnd (endIdx + 1)
+                    |> String.trim
+                (prog, args)
+            | None -> raise <| Exceptions.MissingEndQuote(exec)
+
+        let parseSpacedProgramAndArgs exec:string : string*string =
             let spaceIdx = String.indexOf " " exec
             match spaceIdx with
             | Some index ->
@@ -66,6 +85,13 @@ module Program =
                 (prog, args)
             | None -> (exec, "")
 
+        let parseProgramAndArgs exec:string : string*string =
+            let quoteStartIdx = String.indexOf "\"" exec
+            match quoteStartIdx with
+            | Some 0 -> parseQuotedProgramAndArgs exec
+            | Some idx -> parseSpacedProgramAndArgs exec
+            | None -> parseSpacedProgramAndArgs exec
+                
         let rec executeCommand (progArgs:ProgramArguments) (execs:string list) =
             match execs with
             | [] -> ()

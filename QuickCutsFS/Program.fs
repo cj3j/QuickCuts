@@ -91,6 +91,13 @@ module Program =
             | Some 0 -> parseQuotedProgramAndArgs exec
             | Some idx -> parseSpacedProgramAndArgs exec
             | None -> parseSpacedProgramAndArgs exec
+
+        let createProcessStartInfo program args = 
+            let dir = System.IO.Path.GetDirectoryName(program)
+            let info = new System.Diagnostics.ProcessStartInfo(program, args)
+            info.WorkingDirectory <- dir
+            //info.UseShellExecute <- true
+            info
                 
         let rec executeCommand (progArgs:ProgramArguments) (execs:string list) =
             match execs with
@@ -102,7 +109,8 @@ module Program =
                     match execArgs.Length with
                     | 0 -> userArgs
                     | _ -> execArgs + " " + userArgs
-                System.Diagnostics.Process.Start(program, args) |> ignore
+                let startInfo = createProcessStartInfo program args
+                System.Diagnostics.Process.Start(startInfo) |> ignore
                 System.Threading.Thread.Sleep(100)
                 executeCommand progArgs tail
 
@@ -111,7 +119,7 @@ module Program =
             let progArgs = ProgramArgs.parseArgs argList
             let commands = getCommands progArgs
 
-            match progArgs.list  with
+            match progArgs.list with
             | true ->
                 printCommands commands
                 0

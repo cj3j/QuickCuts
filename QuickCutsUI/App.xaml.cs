@@ -37,9 +37,12 @@ namespace QuickCutsUI
         protected override void OnStartup(StartupEventArgs e)
         {
 			// this is necessary since the Start With Windows option puts our directory in System32
-			var DirName = System.Reflection.Assembly.GetExecutingAssembly().Location;
-			DirName = System.IO.Path.GetDirectoryName(DirName);
-			System.IO.Directory.SetCurrentDirectory(DirName);
+			if (System.Diagnostics.Debugger.IsAttached == false)
+			{
+				var DirName = System.Reflection.Assembly.GetExecutingAssembly().Location;
+				DirName = System.IO.Path.GetDirectoryName(DirName);
+				System.IO.Directory.SetCurrentDirectory(DirName);
+			}
 
 			bool bResetAppSettings = false;
 

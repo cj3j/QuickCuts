@@ -41,13 +41,13 @@ module Commands =
     }
     with override this.ToString() = sprintf "%s %s %O" (this.nodeType.ToString()) this.name this.value
 
-//    type Exec = {
-//        path: string
-//        args: string
-//    }
+    type CommandType =
+        | Shortcut
+        | Executable
 
     type Command = {
         name: string;
+        cmdType: CommandType;
         execs: string list;
     }
 
@@ -241,18 +241,26 @@ module Commands =
         let inlineExecs = addExec node.content context []
         let branchContext = Context.addBranch node.children context
         let execs = addCommandExecs branchContext.branchNodes branchContext inlineExecs
-        let command = { name=name; execs=(List.rev execs) }
+        let command = { name=name; cmdType = Shortcut; execs=(List.rev execs) }
         command
 
     let commandFromFile path =
         let name = System.IO.Path.GetFileNameWithoutExtension(path)
-        let command = { name=name; execs=[path]}
+        let command = { name=name; cmdType = Executable; execs=[path]}
         command
+
+    let isExecutable path =
+        match System.IO.Path.GetExtension(path) with
+        | Name ".exe" -> true
+        | Name ".bat" -> true
+        | Name ".py" -> true
+        | _ -> false
 
     let addCommandsFromDirectory (dir:string) (commands:Command list) = 
         System.IO.Directory.GetFiles(dir)
-            |> Array.toList
-            |> List.map commandFromFile
+            |> Seq.filter isExecutable
+            |> Seq.map commandFromFile
+            |> Seq.toList
             |> List.append commands
 
     let addCommandsFromPath (path:string) (commands:Command list) = 

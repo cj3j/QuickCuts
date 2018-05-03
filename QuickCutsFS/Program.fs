@@ -18,6 +18,7 @@ namespace QuickCutsFS
 
 open System
 open ProgramArgs
+open Commands
 
 module Program =
 
@@ -27,6 +28,9 @@ module Program =
 
     [<EntryPoint>]
     let main argv = 
+        //let args = [|"-file"; "Commands.txt"; "-profile"; "Default"; "cb"; "<"; "input.txt"|]
+        let args = argv
+
         let printExec (command:string) (exec:string) =
             printfn "%s %s" command exec
 
@@ -37,7 +41,7 @@ module Program =
                 printExecs command tail
             | [] -> ()
 
-        let rec printCommands (commands:Commands.Command list) =
+        let rec printCommands (commands:Command list) =
             match commands with
             | head::tail ->
                 printExecs head.name head.execs
@@ -92,14 +96,31 @@ module Program =
             | Some idx -> parseSpacedProgramAndArgs exec
             | None -> parseSpacedProgramAndArgs exec
 
-        let createProcessStartInfo program args = 
-            let dir = System.IO.Path.GetDirectoryName(program)
-            let info = new System.Diagnostics.ProcessStartInfo(program, args)
-            info.WorkingDirectory <- dir
+        let getFullPath path =
+            match System.IO.Path.IsPathRooted(path) with
+            | true -> path
+            | false -> System.IO.Path.Combine(Environment.CurrentDirectory, path)
+
+        let createShortcutProcessStartInfo path args =
+            new System.Diagnostics.ProcessStartInfo(path, args)
+
+        let createExecutableProcessStartInfo path args =
+            let name = System.IO.Path.GetFileName(path)
+            let info = new System.Diagnostics.ProcessStartInfo("cmd.exe", "/C " + name + " " + args)
+            info.CreateNoWindow <- true
+            info
+
+        let createProcessStartInfo cmdType program args = 
+            let path = getFullPath program
+            let info =
+                match cmdType with
+                    | Shortcut -> createShortcutProcessStartInfo path args
+                    | Executable -> createExecutableProcessStartInfo path args
+            info.WorkingDirectory <- System.IO.Path.GetDirectoryName(path)
             //info.UseShellExecute <- true
             info
                 
-        let rec executeCommand (progArgs:ProgramArguments) (execs:string list) =
+        let rec executeCommand (progArgs:ProgramArguments) (cmdType:CommandType) (execs:string list) =
             match execs with
             | [] -> ()
             | head::tail ->
@@ -109,13 +130,13 @@ module Program =
                     match execArgs.Length with
                     | 0 -> userArgs
                     | _ -> execArgs + " " + userArgs
-                let startInfo = createProcessStartInfo program args
+                let startInfo = createProcessStartInfo cmdType program args
                 System.Diagnostics.Process.Start(startInfo) |> ignore
                 System.Threading.Thread.Sleep(100)
-                executeCommand progArgs tail
+                executeCommand progArgs cmdType tail
 
         try
-            let argList = Array.toList argv
+            let argList = Array.toList args
             let progArgs = ProgramArgs.parseArgs argList
             let commands = getCommands progArgs
 
@@ -127,7 +148,7 @@ module Program =
                 let command =
                     commands
                     |> List.find (fun c -> Commands.namesEqual c.name progArgs.command)
-                executeCommand progArgs command.execs
+                executeCommand progArgs command.cmdType command.execs
                 0
         with
             | ex ->

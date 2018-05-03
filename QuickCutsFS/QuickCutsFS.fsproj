@@ -25,7 +25,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Debug\JRunFS.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
-    <StartArguments>-file Commands.txt -profile Default cook</StartArguments>
+    <StartArguments>-file Commands.txt -profile Default -list</StartArguments>
     <StartWorkingDirectory>d:\_sync\jrun</StartWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">

@@ -17,6 +17,7 @@
 using System;
 using System.Windows;
 using System.Windows.Input;
+using System.Configuration;
 
 namespace QuickCutsUI.controls
 {
@@ -29,6 +30,8 @@ namespace QuickCutsUI.controls
         {
             InitializeComponent();
 
+			CheckForSettingsCorruption();
+
             QuickCutsUI.Properties.Settings.Default.PropertyChanged += new System.ComponentModel.PropertyChangedEventHandler(Default_PropertyChanged);
 
             trayIcon.Icon = QuickCutsUI.Properties.Resources.DefaultTrayIcon1;
@@ -37,6 +40,43 @@ namespace QuickCutsUI.controls
 
             OpenConsoleWindow();
         }
+
+		void CheckForSettingsCorruption()
+		{
+			try
+			{
+				var nothing = QuickCutsUI.Properties.Settings.Default.HotKeyString;
+			}
+			catch (ConfigurationErrorsException ex)
+			{
+				var innerEx = (ConfigurationException)ex.InnerException;
+				string filename = innerEx.Filename;
+
+				if (MessageBox.Show("QuickCutsUI has detected that your user settings file has become corrupted. " +
+									 "This may be due to a crash or improper exiting of the program.\n\n" +
+
+									 "File path: " + innerEx.Filename + "\n\n" +
+									 "Message: " + innerEx.Message + "\n\n" +
+
+									  "QuickCutsUI must reset your user settings in order to continue.\n\n" +
+									  "Click Yes to reset your user settings and continue.\n\n" +
+									  "Click No if you wish to attempt manual repair or to rescue information before proceeding.",
+									  "Corrupt user settings",
+									  MessageBoxButton.YesNo,
+									  MessageBoxImage.Error) == MessageBoxResult.Yes)
+				{
+					
+					System.IO.File.Delete(innerEx.Filename);
+					QuickCutsUI.Properties.Settings.Default.Reload();
+					// you could optionally restart the app instead
+				}
+				else
+				{
+					// avoid the inevitable crash
+					System.Diagnostics.Process.GetCurrentProcess().Kill();
+				}
+			}
+		}
 
         void Default_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {

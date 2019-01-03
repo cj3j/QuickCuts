@@ -283,7 +283,8 @@ module Commands =
             match node.content.value with
             | Some v ->
                 let path = String.trimChars v '"'
-                addCommandsFromPath path commands
+                let expandedPath = Context.expandValue path context
+                addCommandsFromPath expandedPath commands
             | None -> commands
         | _ -> commands
 
